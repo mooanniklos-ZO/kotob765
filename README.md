@@ -25,11 +25,24 @@
 
 ---
 
-## 🛠️ البناء والتثبيت (CI/CD GitHub Workflow)
-تم ضبط الـ Workflow بالكامل في مسار `.github/workflows/android_build.yml`.
-لبناء ملف الـ **APK**:
+## 📲 كيفية تحميل وتثبيت ملف الـ APK على هاتفك الأندرويد
+
+### الطريقة الأولى (عبر GitHub Releases - الأسهل والأسرع):
+1. ادخل إلى صفحة مستودعك في GitHub: `https://github.com/mooanniklos-ZO/kotob765/releases`
+2. اضغط على الإصدار **v1.0.0**
+3. حمل ملف: `Athar-AlFikr-AlGharbi-v1.0.apk`
+4. افتح الملف في هاتفك واضغط **تثبيت (Install)**.
+
+### الطريقة الثانية (عبر GitHub Actions Artifacts):
+1. افتح تبويب **Actions** في مستودع GitHub: `https://github.com/mooanniklos-ZO/kotob765/actions`
+2. اضغط على أحدث تشغيل (Build Android APK / Assemble & Release APK) بعد إتمامه باللون الأخضر.
+3. في أسفل الصفحة عند قسم **Artifacts**، ستجد ملف **Athar-AlFikr-AlGharbi-APK** جاهزاً للتحميل المباشر.
+
+---
+
+## 🛠️ البناء اليدوي المحلي (Local Build)
 ```bash
-gradle assembleDebug
+./gradlew assembleDebug
 ```
 ملف الـ APK الناتج:
 `app/build/outputs/apk/debug/app-debug.apk`

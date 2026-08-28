@@ -7,9 +7,12 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    name: Assemble APK
+    name: Assemble & Release APK
     runs-on: ubuntu-latest
 
     steps:
@@ -21,20 +24,81 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
 
-      - name: Grant execute permission for gradlew
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Prepare Environment and Signing Keys
         run: |
+          echo "=== Preparing Environment ==="
+          
+          # 1. Ensure .env exists for Secrets Gradle Plugin
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          else
+            touch .env
+          fi
+
+          # 2. Restore or Generate debug.keystore
+          if [ -f debug.keystore.base64 ] && [ -s debug.keystore.base64 ]; then
+            echo "Restoring debug.keystore from base64..."
+            base64 -d debug.keystore.base64 > debug.keystore
+          else
+            echo "Generating fresh debug.keystore..."
+            keytool -genkey -v -keystore debug.keystore \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+          # 3. Grant execute permission
           if [ -f gradlew ]; then
             chmod +x gradlew
           fi
 
-      - name: Build with Gradle
-        run: ./gradlew assembleDebug --stacktrace || gradle assembleDebug --stacktrace
+      - name: Accept Android Licenses
+        run: |
+          yes | sdkmanager --licenses || true
 
-      - name: Upload APK Artifact
+      - name: Build APK with Gradle
+        run: |
+          gradle :app:assembleDebug --stacktrace --no-daemon
+
+      - name: Prepare APK Asset
+        run: |
+          mkdir -p build_output
+          cp app/build/outputs/apk/debug/*.apk build_output/Athar-AlFikr-AlGharbi-v1.0.apk
+          echo "APK generated successfully at build_output/Athar-AlFikr-AlGharbi-v1.0.apk"
+          ls -la build_output/
+
+      - name: Upload APK to Workflow Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Athar-AlFikr-AlGharbi-App
-          path: app/build/outputs/apk/debug/*.apk
+          name: Athar-AlFikr-AlGharbi-APK
+          path: build_output/Athar-AlFikr-AlGharbi-v1.0.apk
           retention-days: 30
+
+      - name: Create or Update GitHub Release
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: "تطبيق كتاب: أثر الفكر الغربي المعاصر (APK الإصدار الأول)"
+          body: |
+            ## 📱 تطبيق كتاب: أثر الفكر الغربي المعاصر على المجتمع المسلم في الوقت الراهن
+            **إعداد وتأليف:** الدكتور / مالك عبدالرحمن الرميمة
+
+            ---
+            ### 📥 رابط التحميل المباشر للهاتف:
+            يمكنك تحميل ملف الـ APK وتثبيته مباشرة على جهاز الأندرويد من المرفقات أدناه:
+            - **اسم الملف:** `Athar-AlFikr-AlGharbi-v1.0.apk`
+          files: build_output/Athar-AlFikr-AlGharbi-v1.0.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
