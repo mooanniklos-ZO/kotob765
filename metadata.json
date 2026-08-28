@@ -1,0 +1,6 @@
+{
+  "name": "أثر الفكر الغربي",
+  "description": "كتاب أثر الفكر الغربي المعاصر على المجتمع المسلم في الوقت الراهن - إعداد وتأليف د. مالك عبدالرحمن الرميمة بتصميم فاخر وقارئ تفاعلي وثلاثي الأبعاد",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
